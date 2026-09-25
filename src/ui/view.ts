@@ -6,6 +6,7 @@ import { describeBoard } from './boardDescription';
 function preview(kind: PieceKind | null): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'mini-piece';
+  wrapper.setAttribute('role', 'img');
   wrapper.setAttribute('aria-label', kind ? `${kind} piece` : 'Empty');
   const cells = kind ? new Set(cellsFor({ kind, rotation: 0, x: 0, y: 0 }).map(({ x, y }) => `${x},${y}`)) : new Set<string>();
   for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) {

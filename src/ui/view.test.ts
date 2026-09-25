@@ -12,6 +12,7 @@ it('renders a ready board and changes to the playing view', () => {
   view.render(ready, 42);
   expect(document.querySelectorAll('#board .cell')).toHaveLength(200);
   expect(document.querySelectorAll('#next-preview .mini-piece')).toHaveLength(5);
+  expect(document.querySelectorAll('#next-preview [role="img"]')).toHaveLength(5);
   expect(document.querySelector('#best')?.textContent).toBe('42');
   expect(document.querySelector('#score')?.textContent).toBe('0');
   expect(document.querySelector('#level')?.textContent).toBe('1');
