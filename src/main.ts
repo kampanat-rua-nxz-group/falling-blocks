@@ -44,7 +44,10 @@ export function createApp(doc: Document, clock: FrameClock) {
     else if (state.status === 'paused' && previous.status !== 'paused') view.announce('Paused');
     else if (state.status === 'playing' && previous.status === 'paused') view.announce('Resumed');
     else if (state.level > previous.level) view.announce(`Level ${state.level}`);
-    else if (state.lines > previous.lines) view.announce(`${state.lines - previous.lines} lines cleared`);
+    else if (state.lines > previous.lines) {
+      const cleared = state.lines - previous.lines;
+      view.announce(`${cleared} line${cleared === 1 ? '' : 's'} cleared`);
+    }
   }
 
   function send(action: Action) {
