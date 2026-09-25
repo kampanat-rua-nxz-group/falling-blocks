@@ -1,0 +1,7 @@
+:root { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #F7F4E8; background: #0B1021; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+#board { display: grid; grid-template-columns: repeat(10, 1fr); touch-action: none; }
+.cell { aspect-ratio: 1; border: 1px solid #2E3857; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
