@@ -1,18 +1,24 @@
 import type { Action } from '../game/types';
 
-type Gesture = { id: number; x: number; y: number; time: number; axis: 'horizontal' | 'vertical' | null; steps: number };
+type Gesture = { id: number; x: number; y: number; time: number; axis: 'horizontal' | 'vertical' | null; steps: number; maxTravel: number };
 
 export function createGestureInterpreter(send: (action: Action) => void) {
   let gesture: Gesture | null = null;
+  const pointers = new Set<number>();
+  let blocked = false;
   return {
     start(pointerId: number, x: number, y: number, timeMs: number) {
-      if (gesture) { gesture = null; return; }
-      gesture = { id: pointerId, x, y, time: timeMs, axis: null, steps: 0 };
+      if (pointers.has(pointerId)) return;
+      pointers.add(pointerId);
+      if (pointers.size > 1) { gesture = null; blocked = true; return; }
+      if (blocked) return;
+      gesture = { id: pointerId, x, y, time: timeMs, axis: null, steps: 0, maxTravel: 0 };
     },
     move(pointerId: number, x: number, y: number, _timeMs: number) {
-      if (!gesture || gesture.id !== pointerId) return;
+      if (blocked || !gesture || gesture.id !== pointerId) return;
       const dx = x - gesture.x;
       const dy = y - gesture.y;
+      gesture.maxTravel = Math.max(gesture.maxTravel, Math.abs(dx), Math.abs(dy));
       if (!gesture.axis && Math.max(Math.abs(dx), Math.abs(dy)) > 12) {
         gesture.axis = Math.abs(dx) >= Math.abs(dy) ? 'horizontal' : 'vertical';
       }
@@ -28,13 +34,22 @@ export function createGestureInterpreter(send: (action: Action) => void) {
       }
     },
     end(pointerId: number, x: number, y: number, timeMs: number) {
+      if (!pointers.delete(pointerId)) return;
+      if (blocked) { if (pointers.size === 0) blocked = false; return; }
       if (!gesture || gesture.id !== pointerId) return;
       const dx = x - gesture.x;
       const dy = y - gesture.y;
-      if (Math.max(Math.abs(dx), Math.abs(dy)) < 12) send({ type: 'rotateCW' });
-      else if (gesture.axis === 'vertical' && dy >= 64 && timeMs - gesture.time <= 250) send({ type: 'hardDrop' });
+      const distance = Math.max(Math.abs(dx), Math.abs(dy));
+      const axis = gesture.axis ?? (distance > 12 ? Math.abs(dx) >= Math.abs(dy) ? 'horizontal' : 'vertical' : null);
+      if (!gesture.axis && Math.max(gesture.maxTravel, distance) < 12) send({ type: 'rotateCW' });
+      else if (axis === 'vertical' && dy >= 64 && timeMs - gesture.time <= 250) send({ type: 'hardDrop' });
       gesture = null;
     },
-    cancel() { gesture = null; },
+    cancel(pointerId?: number) {
+      gesture = null;
+      if (pointerId === undefined) pointers.clear();
+      else pointers.delete(pointerId);
+      blocked = pointers.size > 0;
+    },
   };
 }

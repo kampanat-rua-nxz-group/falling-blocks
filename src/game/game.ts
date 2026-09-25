@@ -42,8 +42,6 @@ function lock(state: GameState, active = state.active): GameState {
 function moveActive(state: GameState, active: ActivePiece | null): GameState {
   if (!active) return state;
   const wasGrounded = !tryMove(state.board, state.active, 0, 1);
-  const isGrounded = !tryMove(state.board, active, 0, 1);
-  if (!isGrounded) return { ...state, active, lockMs: 0 };
   if (wasGrounded && state.lockResets < 15) {
     return { ...state, active, lockMs: 0, lockResets: state.lockResets + 1 };
   }
@@ -64,7 +62,7 @@ export function dispatch(state: GameState, action: Action): GameState {
     case 'rotateCCW': return moveActive(state, tryRotate(state.board, state.active, -1));
     case 'softDrop': {
       const active = tryMove(state.board, state.active, 0, 1);
-      return active ? { ...state, active, score: state.score + 1, gravityMs: 0, lockMs: 0 } : state;
+      return active ? { ...state, active, score: state.score + 1, gravityMs: 0 } : state;
     }
     case 'hardDrop': {
       const y = landingY(state.board, state.active);
@@ -100,7 +98,7 @@ export function advance(state: GameState, elapsedMs: number): GameState {
       remaining -= step;
       const gravityMs = current.gravityMs + step;
       if (gravityMs >= interval) {
-        current = { ...current, active: tryMove(current.board, current.active, 0, 1)!, gravityMs: 0, lockMs: 0 };
+        current = { ...current, active: tryMove(current.board, current.active, 0, 1)!, gravityMs: 0 };
       } else {
         current = { ...current, gravityMs };
       }

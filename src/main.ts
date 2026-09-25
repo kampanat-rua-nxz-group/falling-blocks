@@ -81,7 +81,7 @@ export function createApp(doc: Document, clock: FrameClock) {
   };
   const onPointerMove = (event: PointerEvent) => gesture.move(event.pointerId, event.clientX, event.clientY, event.timeStamp);
   const onPointerUp = (event: PointerEvent) => gesture.end(event.pointerId, event.clientX, event.clientY, event.timeStamp);
-  const onPointerCancel = () => gesture.cancel();
+  const onPointerCancel = (event: PointerEvent) => gesture.cancel(event.pointerId);
   board.addEventListener('pointerdown', onPointerDown);
   board.addEventListener('pointermove', onPointerMove);
   board.addEventListener('pointerup', onPointerUp);

@@ -32,6 +32,13 @@ it('kicks away from the right wall', () => {
   expect(canPlace(board, rotated!)).toBe(true);
 });
 
+it('kicks around a stack cell without overlapping it', () => {
+  const board: Board = emptyBoard().map((row, y) => y === 7 ? row.map((cell, x) => x === 4 ? 'J' : cell) : row);
+  const rotated = tryRotate(board, { kind: 'T', rotation: 0, x: 3, y: 5 }, 1);
+  expect(rotated).toEqual({ kind: 'T', rotation: 1, x: 2, y: 5 });
+  expect(canPlace(board, rotated!)).toBe(true);
+});
+
 it('refuses a rotation when every kick is blocked', () => {
   const piece = { kind: 'T' as const, rotation: 0 as const, x: 3, y: 5 };
   const activeCells = new Set(cellsFor(piece).map(({ x, y }) => `${x},${y}`));
@@ -50,6 +57,18 @@ it('clears four rows together without mutating the original board', () => {
   expect(result.linesCleared).toBe(4);
   expect(result.board.every(row => row.every(cell => cell === null))).toBe(true);
   expect(source[19]?.[0]).toBe('J');
+});
+
+it('compacts surviving rows in their original order after a four-line clear', () => {
+  const source: Board = emptyBoard().map((row, y) =>
+    y >= 16 ? row.map((_, x) => x === 4 ? null : 'J')
+      : y === 0 ? row.map((cell, x) => x === 0 ? 'T' : cell)
+        : y === 15 ? row.map((cell, x) => x === 9 ? 'L' : cell) : row);
+  const result = lockAndClear(source, { kind: 'I', rotation: 1, x: 2, y: 16 });
+  expect(result.linesCleared).toBe(4);
+  expect(result.board[4]?.[0]).toBe('T');
+  expect(result.board[19]?.[9]).toBe('L');
+  expect(result.board[0]?.[0]).toBeNull();
 });
 
 it('reports above-top locks', () => {

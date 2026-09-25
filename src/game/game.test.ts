@@ -67,6 +67,31 @@ it('stops resetting lock delay after fifteen grounded moves', () => {
   expect(dispatch(elapsed, { type: 'left' }).lockMs).toBe(100);
 });
 
+it('counts leaving a ledge as a lock reset and locks after the fifteenth reset', () => {
+  const base = dispatch(createGame(9), { type: 'start' });
+  const board: Board = emptyBoard().map((row, y) => y === 18 ? row.map((cell, x) => x === 4 ? 'J' : cell) : row);
+  let state: GameState = { ...base, board, active: { kind: 'O', rotation: 0, x: 3, y: 16 } };
+  for (let i = 0; i < 15; i++) {
+    for (let tick = 0; tick < 4; tick++) state = advance(state, 100);
+    state = dispatch(state, { type: 'right' });
+    state = dispatch(state, { type: 'left' });
+  }
+  expect(state.lockResets).toBe(15);
+  for (let tick = 0; tick < 4; tick++) state = advance(state, 100);
+  state = dispatch(dispatch(state, { type: 'right' }), { type: 'left' });
+  expect(advance(state, 100).active).not.toEqual(state.active);
+});
+
+it('does not erase exhausted lock time during soft drop or gravity', () => {
+  const base = dispatch(createGame(9), { type: 'start' });
+  const board: Board = emptyBoard().map((row, y) => y === 18 ? row.map((cell, x) => x === 4 ? 'J' : cell) : row);
+  const grounded: GameState = { ...base, board, active: { kind: 'O', rotation: 0, x: 3, y: 16 }, lockMs: 400, lockResets: 15 };
+  const airborne = dispatch(grounded, { type: 'right' });
+  expect(airborne.lockMs).toBe(400);
+  expect(dispatch(airborne, { type: 'softDrop' }).lockMs).toBe(400);
+  expect(advance({ ...airborne, gravityMs: 950 }, 100).lockMs).toBe(400);
+});
+
 it('ends if a locked piece still has a cell above the board', () => {
   const base = dispatch(createGame(3), { type: 'start' });
   const board: Board = emptyBoard().map((row, y) => y === 1 ? row.map(() => 'J' as const) : row);
